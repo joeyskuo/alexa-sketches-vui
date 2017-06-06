@@ -1,0 +1,31 @@
+{
+  "intents": [
+    {
+      "intent": "GuessIntent",
+      "slots": [
+        {
+          "name": "Guess",
+          "type": "ANSWER"
+        }
+      ]
+    },
+
+    {
+      "intent": "HelpIntent",
+      "slots": [
+        {
+          "name": "inquiry",
+          "type": "response"
+        }
+      ]
+    },
+
+    {
+      "intent": "AMAZON.StopIntent"
+    },
+
+    {
+      "intent": "AMAZON.CancelIntent"
+    }
+  ]
+}
