@@ -5,6 +5,7 @@ exports.handler = function(event, context) {
 
   var request = event.request;
   var session = event.session;
+  let exitsound = "<audio src='https://s3.amazonaws.com/sketchesgame/exit.mp3'/>";
 
   if(!event.session.attributes) {
     event.session.attributes = {};
@@ -32,7 +33,7 @@ exports.handler = function(event, context) {
     } else if (request.intent.name === "AMAZON.StopIntent" || request.intent.name === "AMAZON.CancelIntent") {
 
       context.succeed(buildResponse({
-      speechText: "Goodbye,",
+      speechText: exitsound,
       endSession: true
       })
       );
@@ -79,7 +80,7 @@ function buildResponse(options) {
 
 return response;
 
-}
+}      
 
 function handleGuessIntent(request, context, session, fin){
       let options = {};
