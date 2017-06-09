@@ -3,6 +3,11 @@ var http = require('http');
 
 exports.handler = function(event, context) {
 
+
+	if(process.env.NODE_DEBUG_EN) {
+	  console.log("Request:\n"+JSON.stringify(event,null,2));
+	}
+
   var request = event.request;
   var session = event.session;
   let exitsound = "<audio src='https://s3.amazonaws.com/sketchesgame/exit.mp3'/>";
@@ -20,7 +25,7 @@ exports.handler = function(event, context) {
     
     if (request.intent.name === "GuessIntent" && event.session.attributes.GuessIntent !== true && event.session.attributes.HelpIntent !== true) {
 
-      handleGuessIntent(request, context, session, true);
+      handleGuessIntent(request, context, session, false);
 
     } else if (request.intent.name === "GuessIntent"){
 
@@ -78,6 +83,10 @@ function buildResponse(options) {
     response.sessionAttributes = options.session.attributes;
   }
 
+  if(process.env.NODE_DEBUG_EN) {
+    console.log("Response:\n"+JSON.stringify(response,null,2));
+  }
+
 return response;
 
 }      
@@ -118,7 +127,7 @@ function handleGuessIntent(request, context, session, fin){
           }
         });
       } else {
-            options.speechText = "Please answer with yes, no, or repeat.";
+            options.speechText = "Please answer with yes, no, or help.";
             options.endSession = false;
             options.session.attributes.HelpIntent = true;
             options.session.attributes.GuessIntent = false;
@@ -179,10 +188,19 @@ function handleHelpIntent(request, context, session){
 function handleLaunchRequest(context,session){
     let options = {};
     options.session = session;
-    options.speechText = "Connected to sketches game. Listening for guesses. ";
-    options.endSession = false;
-    options.session.attributes.GuessIntent = true;
-    context.succeed(buildResponse(options)); // send response to user
+
+        getJSON(function(json,err){
+          if(err) {
+            context.fail(err);
+          } else {
+				    options.speechText = "Connected to sketches game. Currently sketching "+ json.word + `<break time="100ms"/>`;
+				    options.speechText += "Guesses can be sent by just saying " + json.word + `<break strength="medium"/> or <break strength="medium"/> guess ` + json.word;
+				    options.speechText += `<break time="150ms"/> I will keep listening for new guesses. Would you like to start playing, `;
+				    options.endSession = false;
+				    options.session.attributes.HelpIntent = true;
+				    context.succeed(buildResponse(options)); // send response to user
+          }
+        });
 }
 
 
