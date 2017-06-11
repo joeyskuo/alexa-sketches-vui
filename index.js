@@ -105,23 +105,24 @@ function handleGuessIntent(request, context, session, fin){
         getJSON(function(json,err){
           if(err) {
             context.fail(err);
-          // } else if (guess == "help") {
-          //   options.speechText = `To play, a web-browser must be open at <prosody rate="90%">www.sketchesgame<say-as interpret-as="spell-out">.io</say-as> <break time="300ms"/>To send a guess, you can just state your guess.</prosody>`;
-          //   options.speechText += `For example, you can say airplane, or <break strength="medium"/>guess airplane.`;
-          //   options.speechText += `<break time="150ms"/><prosody rate="medium">Would you like to start playing,</prosody>`;
-          //   options.session.attributes.HelpIntent = true;
-          //   options.session.attributes.GuessIntent = false;
-          //   context.succeed(buildResponse(options)); // send response and continue session
-          } else if (guess == json.word) {
+          } else if (guess == json.word && json.time < 6) {		// early correct guess
             options.speechText = rightsound + `${guess}` + " was correct! ";
+            options.repromptText = "Starting new sketch.";
             options.session.attributes.GuessIntent = true;
             context.succeed(buildResponse(options)); // send response and continue session
-          } else if (json.time > 10) {
+          } else if (guess == json.word) {						// mid to late correct guess
+            options.speechText = rightsound + `${guess}` + " was correct! ";
+            options.repromptText = "Waiting for new guess, ";
+            options.session.attributes.GuessIntent = true;
+            context.succeed(buildResponse(options)); // send response and continue session
+          } else if (json.time > 10) {							// late wrong guess
             options.speechText = wrongsound + " The answer was " + json.word;
+            options.repromptText = "Waiting for new guess, ";
             options.session.attributes.GuessIntent = true;
             context.succeed(buildResponse(options)); // send response and continue session
           } else {
-            options.speechText = wrongsound;
+            options.speechText = wrongsound;					// normal wrong guess
+            options.repromptText = "The answer was " + json.word + `.<break time="150ms"/> Listening for new guess,`;
             options.session.attributes.GuessIntent = true;
             context.succeed(buildResponse(options)); // send response and continue session
           }
@@ -146,6 +147,7 @@ function handleHelpIntent(request, context, session){
             options.speechText = `To play, a web-browser must be open at <prosody rate="90%">www.sketchesgame<say-as interpret-as="spell-out">.io</say-as> <break time="300ms"/>To send a guess, you can just state your guess.</prosody>`;
             options.speechText += `For example, you can say airplane, or <break strength="medium"/>guess airplane.`;
             options.speechText += `<break time="150ms"/><prosody rate="medium">Would you like to start playing,</prosody>`;
+            options.repromptText = "You can say yes, no, or repeat.";
             options.endSession = false;
             options.session.attributes.HelpIntent = true;
             options.session.attributes.GuessIntent = false;
@@ -153,6 +155,7 @@ function handleHelpIntent(request, context, session){
       } else if(session.attributes.HelpIntent) {
             if (resp == "yes" || resp == "start") {
               options.speechText = "Starting game. Listening for guesses.";
+              options.repromptText = "Waiting for new guess, "; // extend
               options.session.attributes.GuessIntent = true;
               options.session.attributes.HelpIntent = false;
               options.endSession = false;
@@ -165,6 +168,7 @@ function handleHelpIntent(request, context, session){
               options.speechText = `To play, a web-browser must be open at <prosody rate="90%">www.sketchesgame<say-as interpret-as="spell-out">.io</say-as> <break time="300ms"/>To send a guess, you can just state your guess.</prosody>`;
               options.speechText += `For example, you can say airplane, or <break strength="medium"/>guess airplane.`;
               options.speechText += `<break time="150ms"/><prosody rate="medium">Would you like to start playing,</prosody>`;
+              options.repromptText = "You can say yes, no, or repeat.";
               options.endSession = false;
               options.session.attributes.HelpIntent = true;
               options.session.attributes.GuessIntent = false;
@@ -177,7 +181,8 @@ function handleHelpIntent(request, context, session){
               context.succeed(buildResponse(options)); // send response and continue session
             }
       } else {
-          options.speechText = wrongsound;
+          options.speechText = wrongsound;			// Helpintent invocation without help attribute
+          options.repromptText = "You can send me a guess, or ask for help. ";
           options.endSession = false;
           options.session.attributes.GuessIntent = true;
           context.succeed(buildResponse(options)); // send response and continue session
@@ -196,6 +201,7 @@ function handleLaunchRequest(context,session){
 				    options.speechText = "Connected to sketches game. Currently sketching "+ json.word + `<break time="100ms"/>`;
 				    options.speechText += "Guesses can be sent by just saying " + json.word + `<break strength="medium"/> or <break strength="medium"/> guess ` + json.word;
 				    options.speechText += `<break time="150ms"/> I will keep listening for new guesses. Would you like to start playing, `;
+				    options.repromptText = "You can say yes, no, or help.";
 				    options.endSession = false;
 				    options.session.attributes.HelpIntent = true;
 				    context.succeed(buildResponse(options)); // send response to user
